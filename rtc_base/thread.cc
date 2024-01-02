@@ -266,8 +266,8 @@ Thread* Thread::Current() {
 
 #if defined(WEBRTC_POSIX)
 ThreadManager::ThreadManager() : main_thread_ref_(CurrentThreadRef()) {
-#if defined(WEBRTC_MAC)
-  InitCocoaMultiThreading();
+#if defined(WEBRTC_MAC)  
+  InitCocoaMultiThreading();  //这里判断是MAC系统，需要初始化Cocoa多线程的支持，然后才会调用pthread_key_create这种
 #endif
   pthread_key_create(&key_, nullptr);
 }
@@ -708,6 +708,7 @@ void Thread::Dispatch(Message* pmsg) {
                pmsg->posted_from.function_name());
   RTC_DCHECK_RUN_ON(this);
   int64_t start_time = TimeMillis();
+  //发送线程
   pmsg->phandler->OnMessage(pmsg);
   int64_t end_time = TimeMillis();
   int64_t diff = TimeDiff(end_time, start_time);
@@ -719,7 +720,7 @@ void Thread::Dispatch(Message* pmsg) {
     // for delays that are larger than the one observed.
     dispatch_warning_ms_ = diff + 1;
   }
-}
+} 
 
 bool Thread::IsCurrent() const {
   return ThreadManager::Instance()->CurrentThread() == this;
@@ -781,10 +782,11 @@ void Thread::SetDispatchWarningMs(int deadline) {
 
 bool Thread::Start() {
   RTC_DCHECK(!IsRunning());
-
+  //线程是否已经运行
   if (IsRunning())
     return false;
 
+  //状态重新复位
   Restart();  // reset IsQuitting() if the thread is being restarted
 
   // Make sure that ThreadManager is created on the main thread before
@@ -793,6 +795,7 @@ bool Thread::Start() {
 
   owned_ = true;
 
+  //开始创建新线程
 #if defined(WEBRTC_WIN)
   thread_ = CreateThread(nullptr, 0, PreRun, this, 0, &thread_id_);
   if (!thread_) {
@@ -881,7 +884,9 @@ DWORD WINAPI Thread::PreRun(LPVOID pv) {
 #else
 void* Thread::PreRun(void* pv) {
 #endif
+  //1.首先，将传入的参数恢复成Thread对象
   Thread* thread = static_cast<Thread*>(pv);
+  //2.将当前线程和Thread对象进行绑定
   ThreadManager::Instance()->SetCurrentThread(thread);
   rtc::SetCurrentThreadName(thread->name_.c_str());
 #if defined(WEBRTC_MAC)

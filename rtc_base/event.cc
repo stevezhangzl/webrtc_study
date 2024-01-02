@@ -33,6 +33,7 @@ Event::Event() : Event(false, false) {}
 #if defined(WEBRTC_WIN)
 
 Event::Event(bool manual_reset, bool initially_signaled) {
+  //1.创建事件句柄
   event_handle_ = ::CreateEvent(nullptr,  // Security attributes.
                                 manual_reset, initially_signaled,
                                 nullptr);  // Name.
@@ -44,6 +45,7 @@ Event::~Event() {
 }
 
 void Event::Set() {
+  //3.发送事件
   SetEvent(event_handle_);
 }
 
@@ -54,6 +56,7 @@ void Event::Reset() {
 bool Event::Wait(const int give_up_after_ms, int /*warn_after_ms*/) {
   ScopedYieldPolicy::YieldExecution();
   const DWORD ms = give_up_after_ms == kForever ? INFINITE : give_up_after_ms;
+  //3.等待事件
   return (WaitForSingleObject(event_handle_, ms) == WAIT_OBJECT_0);
 }
 
@@ -62,7 +65,7 @@ bool Event::Wait(const int give_up_after_ms, int /*warn_after_ms*/) {
 // On MacOS, clock_gettime is available from version 10.12, and on
 // iOS, from version 10.0. So we can't use it yet.
 #if defined(WEBRTC_MAC) || defined(WEBRTC_IOS)
-#define USE_CLOCK_GETTIME 0
+#define USE_CLOCK_GETTIME 0  //指是否可以使用clock_gettime函数获取时间 精度可以到纳秒级别
 #define USE_PTHREAD_COND_TIMEDWAIT_MONOTONIC_NP 0
 // On Android, pthread_condattr_setclock is available from version 21. By
 // default, we target a new enough version for 64-bit platforms but not for
@@ -165,11 +168,9 @@ bool Event::Wait(const int give_up_after_ms, const int warn_after_ms) {
         error = pthread_cond_wait(&event_cond_, &event_mutex_);
       } else {
 #if USE_PTHREAD_COND_TIMEDWAIT_MONOTONIC_NP
-        error = pthread_cond_timedwait_monotonic_np(&event_cond_, &event_mutex_,
-                                                    &*timeout_ts);
+        error = pthread_cond_timedwait_monotonic_np(&event_cond_, &event_mutex_,&*timeout_ts);
 #else
-        error =
-            pthread_cond_timedwait(&event_cond_, &event_mutex_, &*timeout_ts);
+        error = pthread_cond_timedwait(&event_cond_, &event_mutex_, &*timeout_ts);
 #endif
       }
     }

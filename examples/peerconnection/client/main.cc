@@ -78,6 +78,7 @@ int PASCAL wWinMain(HINSTANCE instance,
   rtc::WinsockInitializer winsock_init;
   rtc::Win32SocketServer w32_ss;
   rtc::Win32Thread w32_thread(&w32_ss);
+  //主线程和Win32Thread对象的绑定，当前的主线程已经运行了  加入ThreadManager中的队列messagequeue的是在Win32Thread的构造里进行的，绑定是运行的时候进行的，这里是绑定
   rtc::ThreadManager::Instance()->SetCurrentThread(&w32_thread);
 
   WindowsCommandLineArguments win_args;
@@ -109,8 +110,7 @@ int PASCAL wWinMain(HINSTANCE instance,
 
   rtc::InitializeSSL();
   PeerConnectionClient client;
-  rtc::scoped_refptr<Conductor> conductor(
-      new rtc::RefCountedObject<Conductor>(&client, &wnd));
+  rtc::scoped_refptr<Conductor> conductor(new rtc::RefCountedObject<Conductor>(&client, &wnd));
 
   // Main loop.
   MSG msg;

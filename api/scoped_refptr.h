@@ -68,23 +68,28 @@
 
 namespace rtc {
 
+//用于管理引用计数的对象，它的主要目的是在对象的生命周期内自动管理引用计数，避免内存泄漏
 template <class T>
 class scoped_refptr {
  public:
   typedef T element_type;
 
+  //默认构造函数，将ptr初始化为nullptr
   scoped_refptr() : ptr_(nullptr) {}
 
+  //带有指针的构造函数，接收一个指向引用计数对象的指针，如果ptr不为空，则增加引用计数
   scoped_refptr(T* p) : ptr_(p) {  // NOLINT(runtime/explicit)
     if (ptr_)
       ptr_->AddRef();
   }
 
+  //拷贝构造函数，接收另一个scoped_refptr 对象 增加引用计数
   scoped_refptr(const scoped_refptr<T>& r) : ptr_(r.ptr_) {
     if (ptr_)
       ptr_->AddRef();
   }
 
+  //拷贝构造函数的模板版本，允许从不同类型的 scoped_refptr 对象进行拷贝构造。
   template <typename U>
   scoped_refptr(const scoped_refptr<U>& r) : ptr_(r.get()) {
     if (ptr_)
@@ -92,11 +97,13 @@ class scoped_refptr {
   }
 
   // Move constructors.
+  //移动构造函数，接收一个右值引用，并通过 release() 来获取其指针。该构造函数将 r 中的指针接管，同时将 r 的指针置为 nullptr。
   scoped_refptr(scoped_refptr<T>&& r) noexcept : ptr_(r.release()) {}
 
   template <typename U>
   scoped_refptr(scoped_refptr<U>&& r) noexcept : ptr_(r.release()) {}
 
+  //析构函数，释放持有的对象。如果 ptr_ 不为空，则调用对象的 Release() 方法。
   ~scoped_refptr() {
     if (ptr_)
       ptr_->Release();
@@ -112,6 +119,7 @@ class scoped_refptr {
   // pointed-to object. The object is still reference counted, and the caller of
   // release() is now the proud owner of one reference, so it is responsible for
   // calling Release() once on the object when no longer using it.
+  //释放 scoped_refptr 对象对引用计数对象的所有权，返回指向该对象的指针，并将自身的指针置为 nullptr。
   T* release() {
     T* retVal = ptr_;
     ptr_ = nullptr;
@@ -154,6 +162,7 @@ class scoped_refptr {
     *pp = p;
   }
 
+  //交换函数，用于在对象之间交换引用计数对象的指针
   void swap(scoped_refptr<T>& r) noexcept { swap(&r.ptr_); }
 
  protected:

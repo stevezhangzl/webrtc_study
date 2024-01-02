@@ -105,7 +105,7 @@ class RTC_EXPORT ThreadManager {
   static const int kForever = -1;
 
   // Singleton, constructor and destructor are private.
-  static ThreadManager* Instance();
+  static ThreadManager* Instance();//单例模式
 
   static void Add(Thread* message_queue);
   static void Remove(Thread* message_queue);
@@ -166,7 +166,7 @@ class RTC_EXPORT ThreadManager {
   // Methods that don't modify the list of message queues may be called in a
   // re-entrant fashion. "processing_" keeps track of the depth of re-entrant
   // calls.
-  RecursiveCriticalSection crit_;
+  RecursiveCriticalSection crit_; //临界区
   size_t processing_ RTC_GUARDED_BY(crit_) = 0;
 #if RTC_DCHECK_IS_ON
   // Represents all thread seand actions by storing all send targets per thread.
